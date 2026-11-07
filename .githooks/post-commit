@@ -1,0 +1,3 @@
+#!/bin/sh
+# BypassX Management Bot: automatically publish every local commit.
+git push origin HEAD
