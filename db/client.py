@@ -8,6 +8,7 @@ added in one place.
 from __future__ import annotations
 
 import logging
+import asyncio
 
 from prisma import Prisma
 
@@ -27,15 +28,33 @@ class Database:
         """Whether the underlying Prisma client is connected."""
         return self._connected
 
-    async def connect(self) -> None:
+    async def connect(self, *, retries: int = 5, base_delay: float = 2.0) -> None:
         """Open the database connection, failing startup if it is unavailable."""
         if self._connected:
             return
 
         logger.info("Connecting to PostgreSQL through Prisma")
-        await self.client.connect()
-        self._connected = True
-        logger.info("PostgreSQL connection established")
+        last_error: Exception | None = None
+        for attempt in range(1, max(1, retries) + 1):
+            try:
+                await self.client.connect()
+                await self.client.query_raw("SELECT 1")
+            except Exception as exc:
+                last_error = exc
+                if attempt >= retries:
+                    break
+                delay = base_delay * (2 ** (attempt - 1))
+                logger.warning("PostgreSQL connection attempt %d/%d failed; retrying in %.1fs", attempt, retries, delay)
+                try:
+                    await self.client.disconnect()
+                except Exception:
+                    logger.debug("Prisma disconnect after failed connection was unsuccessful", exc_info=True)
+                await asyncio.sleep(delay)
+            else:
+                self._connected = True
+                logger.info("PostgreSQL connection established and health check passed")
+                return
+        raise RuntimeError("Could not connect to PostgreSQL after retries") from last_error
 
     async def disconnect(self) -> None:
         """Close the database connection during graceful shutdown."""

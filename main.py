@@ -31,6 +31,9 @@ async def main() -> None:
         await bot.start(settings.bot_token)
     except KeyboardInterrupt:
         logger.info("Shutdown requested by operator")
+    except Exception:
+        logger.exception("Fatal bot runtime failure")
+        raise
     finally:
         await bot.close()
 
@@ -38,7 +41,7 @@ async def main() -> None:
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except RuntimeError as exc:
-        logger = logging.getLogger(__name__)
-        logger.error("Startup failed: %s", exc)
+    except Exception as exc:
+        logging.basicConfig(level=logging.ERROR)
+        logging.getLogger(__name__).exception("BypassX exited unsuccessfully: %s", exc)
         raise SystemExit(1) from exc

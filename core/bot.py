@@ -105,6 +105,13 @@ class BypassX(commands.Bot):
 
     async def on_ready(self) -> None:
         """Log gateway readiness; this event may fire more than once."""
+        try:
+            database_ok = await self.database.healthcheck()
+        except Exception:
+            database_ok = False
+            logger.exception("Database health check failed after gateway readiness")
+        if not database_ok:
+            logger.error("Gateway is ready but the database health check is unavailable")
         if not self._application_emojis_synced:
             await sync_application_emojis(self)
             self._application_emojis_synced = True
@@ -135,6 +142,11 @@ class BypassX(commands.Bot):
         self._shutdown_complete = True
         try:
             await super().close()
+        except Exception:
+            logger.exception("Discord shutdown encountered an error")
         finally:
-            await self.database.disconnect()
+            try:
+                await self.database.disconnect()
+            except Exception:
+                logger.exception("Database shutdown encountered an error")
             logger.info("BypassX shutdown complete")

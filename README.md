@@ -10,7 +10,7 @@ This repository currently contains the deployable project foundation:
 - Environment-variable configuration
 - Prisma schema location
 - Render Blueprint configuration
-- Placeholder feature Cogs for automatic discovery
+- Dynamic feature Cog discovery, with Economy intentionally retained as a disabled placeholder per the project decision to skip Economy
 - Prisma database connection and graceful shutdown lifecycle
 - Complete PostgreSQL Prisma schema covering all planned feature areas
 - Initial committed migration under `db/migrations/0001_init`
@@ -89,6 +89,11 @@ This repository currently contains the deployable project foundation:
 - Dynamic per-guild prefix resolution with safe database-disconnected fallback
 - Full configuration reset cleanup for standalone warnings, moderation cases, giveaways, reminders, and cooldowns
 - Configuration imports validate before mutation and reconcile removed permission-tier assignments
+- Section 24 production hardening for Render and managed hosting deployments
+- Bounded PostgreSQL connection retries with a startup `SELECT 1` health check and gateway-ready database diagnostics
+- Strict environment, Discord ID, and log-level validation with actionable startup errors
+- Resilient Discord/database shutdown handling and fatal runtime logging
+- Automated production-path tests covering settings validation, duration parsing, database retries, and health checks
 - Red/black/white visual theme applied to centralized and feature-level response accents
 - 20 redesigned custom BypassX emoji assets under `assets/emojis`, using red, orange, yellow, blue, white, and charcoal accents
 - Startup synchronization of missing emojis to the Discord application itself, with Unicode fallbacks when the application emoji API is unavailable
@@ -110,6 +115,12 @@ cp .env.example .env
 prisma generate
 prisma migrate deploy
 python main.py
+```
+
+Run the production-readiness checks locally with:
+
+```bash
+pytest -q
 ```
 
 For a local PostgreSQL database, update `DATABASE_URL` in `.env` before starting the bot.

@@ -9,6 +9,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+_ENVIRONMENTS = {"development", "staging", "production"}
+_LOG_LEVELS = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}
+
+
+def _parse_int(value: str, name: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise RuntimeError(f"{name} must be a numeric Discord ID") from exc
+    if parsed <= 0:
+        raise RuntimeError(f"{name} must be a positive Discord ID")
+    return parsed
+
 
 @dataclass(frozen=True, slots=True)
 class Settings:
@@ -26,13 +39,13 @@ class Settings:
         token = os.getenv("BOT_TOKEN", "").strip()
         database_url = os.getenv("DATABASE_URL", "").strip()
         owner_raw = os.getenv("BOT_OWNER_ID", "").strip()
-        owner_id = int(owner_raw) if owner_raw else None
+        owner_id = _parse_int(owner_raw, "BOT_OWNER_ID") if owner_raw else None
 
         guild_ids: list[int] = []
         for value in os.getenv("DEV_GUILD_IDS", "").split(","):
             value = value.strip()
             if value:
-                guild_ids.append(int(value))
+                guild_ids.append(_parse_int(value, "DEV_GUILD_IDS"))
 
         return cls(
             bot_token=token,
@@ -53,6 +66,12 @@ class Settings:
         if missing:
             names = ", ".join(missing)
             raise RuntimeError(f"Missing required environment variable(s): {names}")
+        if self.environment not in _ENVIRONMENTS:
+            allowed = ", ".join(sorted(_ENVIRONMENTS))
+            raise RuntimeError(f"ENVIRONMENT must be one of: {allowed}")
+        if self.log_level not in _LOG_LEVELS:
+            allowed = ", ".join(sorted(_LOG_LEVELS))
+            raise RuntimeError(f"LOG_LEVEL must be one of: {allowed}")
 
 
 settings = Settings.from_environment()
