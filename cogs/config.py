@@ -23,6 +23,8 @@ from db.queries.guild import (
     ensure_guild,
     get_guild,
     list_mod_tiers,
+    remove_mod_tier,
+    reset_guild,
     update_guild,
     upsert_mod_tier,
 )
@@ -115,7 +117,7 @@ class ConfigCog(commands.Cog):
         if guild is None:
             await interaction.response.send_message(**error("This command requires a server."), ephemeral=True)
             return
-        await self.db.guild.delete(where={"id": str(guild.id)})
+        await reset_guild(self.db, str(guild.id))
         await interaction.response.send_message(**success("Server configuration reset."), ephemeral=True)
 
     @config.command(name="reset", description="Reset the full server configuration.")
@@ -167,6 +169,11 @@ class ConfigCog(commands.Cog):
             await interaction.response.send_message(**error("Configuration payload must be a JSON object."), ephemeral=True)
             return
 
+        imported_tiers = data.get("mod_tiers", [])
+        if not isinstance(imported_tiers, list):
+            await interaction.response.send_message(**error("mod_tiers must be a JSON array."), ephemeral=True)
+            return
+
         changes: dict[str, str] = {}
         if "prefix" in data:
             prefix = str(data["prefix"]).strip()
@@ -182,10 +189,15 @@ class ConfigCog(commands.Cog):
             changes["language"] = language
         await update_guild(self.db, str(guild.id), **changes)
 
-        imported_tiers = data.get("mod_tiers", [])
-        if imported_tiers and not isinstance(imported_tiers, list):
-            await interaction.response.send_message(**error("mod_tiers must be a JSON array."), ephemeral=True)
-            return
+        existing_tiers = await list_mod_tiers(self.db, str(guild.id))
+        imported_role_ids = {
+            str(item.get("role_id"))
+            for item in imported_tiers
+            if isinstance(item, dict) and str(item.get("role_id", "")).isdigit()
+        }
+        for existing in existing_tiers:
+            if str(existing.roleId) not in imported_role_ids:
+                await remove_mod_tier(self.db, str(guild.id), str(existing.roleId))
         for item in imported_tiers:
             if not isinstance(item, dict):
                 continue

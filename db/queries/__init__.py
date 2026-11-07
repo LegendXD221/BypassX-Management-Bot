@@ -25,6 +25,7 @@ from .guild import (
     get_guild,
     list_mod_tiers,
     remove_mod_tier,
+    reset_guild,
     update_guild,
     upsert_mod_tier,
 )
@@ -160,6 +161,7 @@ __all__ = [
     "list_warnings",
     "LOG_FIELDS",
     "remove_mod_tier",
+    "reset_guild",
     "remove_level_role",
     "reset_level",
     "reset_log_config",

@@ -85,6 +85,10 @@ This repository currently contains the deployable project foundation:
 - Section 22 Utility Cog with user, server, avatar, banner, role, channel, ping, invite, snipe, editsnipe, poll, embed, and say commands
 - In-memory deleted and edited message caches with bounded per-channel history
 - Components V2 quick polls and styled panels with permission-tier controls for message-sending tools
+- Section 23 Configuration Cog with prefix, language, permission tiers, view, reset, export, and import commands
+- Dynamic per-guild prefix resolution with safe database-disconnected fallback
+- Full configuration reset cleanup for standalone warnings, moderation cases, giveaways, reminders, and cooldowns
+- Configuration imports validate before mutation and reconcile removed permission-tier assignments
 - Red/black/white visual theme applied to centralized and feature-level response accents
 - 20 redesigned custom BypassX emoji assets under `assets/emojis`, using red, orange, yellow, blue, white, and charcoal accents
 - Startup synchronization of missing emojis to the Discord application itself, with Unicode fallbacks when the application emoji API is unavailable

@@ -64,3 +64,15 @@ async def remove_mod_tier(db: Prisma, guild_id: str, role_id: str) -> int:
         where={"guildId": guild_id, "roleId": role_id}
     )
     return result if isinstance(result, int) else result.count
+
+
+async def reset_guild(db: Prisma, guild_id: str) -> None:
+    """Remove the guild configuration and standalone guild-scoped records."""
+    # These models intentionally do not all have a relation to Guild, so they
+    # must be removed explicitly instead of relying on relational cascades.
+    await db.modcase.delete_many(where={"guildId": guild_id})
+    await db.warning.delete_many(where={"guildId": guild_id})
+    await db.giveaway.delete_many(where={"guildId": guild_id})
+    await db.reminder.delete_many(where={"guildId": guild_id})
+    await db.cooldown.delete_many(where={"guildId": guild_id})
+    await db.guild.delete_many(where={"id": guild_id})

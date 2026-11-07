@@ -38,8 +38,16 @@ class BypassX(commands.Bot):
         self.tree.on_error = self.on_app_command_error
 
     async def _prefix(self, _bot: commands.Bot, _message: discord.Message) -> str:
-        """Return the Section 1 default prefix until guild config is implemented."""
-        return "?"
+        """Return the configured guild prefix, falling back safely to ``?``."""
+        guild = _message.guild
+        if guild is None or not self.database.connected:
+            return "?"
+        try:
+            record = await self.db.guild.find_unique(where={"id": str(guild.id)})
+            return record.prefix if record and record.prefix else "?"
+        except Exception:
+            logger.exception("Could not load prefix for guild %s", guild.id)
+            return "?"
 
     async def setup_hook(self) -> None:
         """Connect dependencies, load Cogs, and synchronize application commands."""
