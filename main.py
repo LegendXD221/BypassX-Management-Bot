@@ -6,6 +6,8 @@ import asyncio
 import logging
 import os
 
+import discord
+
 from config.settings import settings
 from core.bot import BypassX
 
@@ -54,7 +56,24 @@ async def main() -> None:
     bot = BypassX()
     health_server = await start_health_server()
     try:
-        await bot.start(settings.bot_token)
+        rate_limit_retries = 0
+        while True:
+            try:
+                await bot.start(settings.bot_token)
+                break
+            except discord.HTTPException as exc:
+                status = getattr(exc.response, "status", None)
+                if status != 429 or rate_limit_retries >= 5:
+                    raise
+                rate_limit_retries += 1
+                delay = min(300, 60 * rate_limit_retries)
+                logger.warning(
+                    "Discord gateway rate limited the bot; retrying in %s seconds (attempt %s/5)",
+                    delay,
+                    rate_limit_retries,
+                )
+                await bot.close()
+                await asyncio.sleep(delay)
     except KeyboardInterrupt:
         logger.info("Shutdown requested by operator")
     except Exception:
