@@ -53,11 +53,12 @@ async def main() -> None:
     configure_logging()
     settings.validate()
 
-    bot = BypassX()
+    bot: BypassX | None = None
     health_server = await start_health_server()
     try:
         rate_limit_retries = 0
         while True:
+            bot = BypassX()
             try:
                 await bot.start(settings.bot_token)
                 break
@@ -73,6 +74,7 @@ async def main() -> None:
                     rate_limit_retries,
                 )
                 await bot.close()
+                bot = None
                 await asyncio.sleep(delay)
     except KeyboardInterrupt:
         logger.info("Shutdown requested by operator")
@@ -82,7 +84,8 @@ async def main() -> None:
     finally:
         health_server.close()
         await health_server.wait_closed()
-        await bot.close()
+        if bot is not None:
+            await bot.close()
 
 
 if __name__ == "__main__":
