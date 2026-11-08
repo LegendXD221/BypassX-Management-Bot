@@ -131,7 +131,7 @@ For a local PostgreSQL database, update `DATABASE_URL` in `.env` before starting
 2. In Render, create a Blueprint and select the repository containing `render.yaml`.
 3. Set the secret values for `BOT_TOKEN` and `BOT_OWNER_ID` when prompted.
 4. Render provisions the PostgreSQL database and injects `DATABASE_URL` into the worker.
-5. The build runs `prisma generate`; the start command applies committed migrations and then starts the bot.
+5. The free Web Service binds Render's `PORT` and exposes `/healthz`; the start command applies committed migrations and then starts the bot.
 
 At startup the bot validates `BOT_TOKEN` and `DATABASE_URL`, connects Prisma,
 loads every `.py` file in `/cogs`, and synchronizes application commands. If

@@ -2,12 +2,13 @@
 # Configure BOT_TOKEN and BOT_OWNER_ID in the Render dashboard or secret group.
 
 services:
-  - type: worker
+  - type: web
     name: bypassx-management
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt && prisma generate
     startCommand: prisma migrate deploy && python main.py
+    healthCheckPath: /healthz
     envVars:
       - key: BOT_TOKEN
         sync: false

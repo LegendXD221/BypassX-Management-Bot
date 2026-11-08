@@ -4,12 +4,37 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from config.settings import settings
 from core.bot import BypassX
 
 
 logger = logging.getLogger(__name__)
+
+
+async def _health_handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    """Serve Render's health check without adding a web framework dependency."""
+    try:
+        await reader.read(1024)
+        body = b'{"status":"ok","service":"bypassx-management"}'
+        response = (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: application/json\r\n"
+            + f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n".encode()
+            + body
+        )
+        writer.write(response)
+        await writer.drain()
+    finally:
+        writer.close()
+        await writer.wait_closed()
+
+
+async def start_health_server() -> asyncio.AbstractServer:
+    """Bind the Render-provided port for Web Service health checks."""
+    port = int(os.getenv("PORT", "10000"))
+    return await asyncio.start_server(_health_handler, host="0.0.0.0", port=port)
 
 
 def configure_logging() -> None:
@@ -27,6 +52,7 @@ async def main() -> None:
     settings.validate()
 
     bot = BypassX()
+    health_server = await start_health_server()
     try:
         await bot.start(settings.bot_token)
     except KeyboardInterrupt:
@@ -35,6 +61,8 @@ async def main() -> None:
         logger.exception("Fatal bot runtime failure")
         raise
     finally:
+        health_server.close()
+        await health_server.wait_closed()
         await bot.close()
 
 
