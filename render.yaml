@@ -6,8 +6,8 @@ services:
     name: bypassx-management
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && prisma generate
-    startCommand: prisma migrate deploy && python main.py
+    buildCommand: pip install -r requirements.txt && prisma generate --schema db/schema.prisma
+    startCommand: prisma migrate deploy --schema db/schema.prisma && python main.py
     healthCheckPath: /healthz
     envVars:
       - key: BOT_TOKEN

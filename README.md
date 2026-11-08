@@ -112,8 +112,8 @@ pip install -r requirements.txt
 cp .env.example .env
 # Fill BOT_TOKEN and DATABASE_URL in .env
 # Optional: set DEV_GUILD_IDS=123456789012345678 for instant local slash-command sync
-prisma generate
-prisma migrate deploy
+prisma generate --schema db/schema.prisma
+prisma migrate deploy --schema db/schema.prisma
 python main.py
 ```
 
@@ -151,8 +151,8 @@ Never commit `.env`, a Discord token, or a database password. Use Render environ
 Use the same commands in the panel's build/start configuration:
 
 ```text
-Build: pip install -r requirements.txt && prisma generate
-Start: prisma migrate deploy && python main.py
+Build: pip install -r requirements.txt && prisma generate --schema db/schema.prisma
+Start: prisma migrate deploy --schema db/schema.prisma && python main.py
 ```
 
 The current emoji artwork is stored directly in `assets/emojis` and is synchronized to the Discord application on startup.
@@ -162,8 +162,8 @@ The current emoji artwork is stored directly in `assets/emojis` and is synchroni
 The canonical schema is `db/schema.prisma`. After changing it locally:
 
 ```bash
-prisma migrate dev --name describe_the_change
-prisma generate
+prisma migrate dev --schema db/schema.prisma --name describe_the_change
+prisma generate --schema db/schema.prisma
 ```
 
 Commit the generated migration directory. Production and Render use
